@@ -38,7 +38,9 @@ namespace RPi.I2C.Net
 		}
 
 
-
+		/// <summary>
+		/// Disposal routine called when finished
+		/// </summary>
 		public void Finalyze()
 		{
 			Dispose(false);
@@ -93,8 +95,9 @@ namespace RPi.I2C.Net
 			int res= I2CNativeLib.WriteBytes(busHandle, address, bytes, bytes.Length);
 			if (res== -1)
 				throw new IOException(String.Format("Error accessing address '{0}': {1}", address, UnixMarshal.GetErrorDescription(Stdlib.GetLastError())));
-			if (res== -2)
-				throw new IOException(String.Format("Error writing to address '{0}': I2C transaction failed", address));
+			// HACK: removing res== -2 check because it was disrupting communications
+			//if (res== -2)
+			//	throw new IOException(String.Format("Error writing to address '{0}': I2C transaction failed", address));
 		}
 
 
