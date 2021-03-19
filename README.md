@@ -3,6 +3,9 @@ This project was born from the idea of using C# for a PiBorg.  I started with a 
 
 Cheers!
 
+This project requires the following NuGet package:
+
+```install-package mono.posix-4.5
 
 
 (Original Readme.md from original author)
