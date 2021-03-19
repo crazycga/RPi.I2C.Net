@@ -204,6 +204,11 @@ namespace SampleApp
 			log.WriteLog("Battery voltage: " + myBorg.GetBatteryVoltage(log).ToString());
 
 			myBorg.SetLEDBatteryMonitor(true, log);
+			log.WriteLog("Board ID: 0x" + myBorg.GetBoardID(log).ToString("X2"));
+			myBorg.GetBatteryMonitoringLimits(log);
+
+			myBorg.SetBatteryMonitoringLimits(7.0M, 35.0M, log);
+
 		}
 	}
 }

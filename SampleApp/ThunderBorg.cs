@@ -697,10 +697,11 @@ namespace SampleApp
             }
         }
 
-        public int GetBatteryVoltage(Logger_class log)
+        public decimal GetBatteryVoltage(Logger_class log = null)
         {
-            int tempReturn = 0;
-            
+            int tempIntReturn = 0;
+            decimal tempReturn = 0.00M;
+
             if (!_CheckInit())
             {
                 throw new NullReferenceException("ThunderBorg not initiated.");
@@ -723,11 +724,118 @@ namespace SampleApp
 
                 if (response[0] == COMMAND_GET_BATT_VOLT)
                 {
-                    tempReturn = ((int)response[1] << 8) + (int)response[2];
+                    tempIntReturn = ((int)response[1] << 8) + (int)response[2];
+                }
+            }
+
+            tempReturn = Convert.ToDecimal(tempIntReturn) / Convert.ToDecimal(COMMAND_ANALOG_MAX);
+            
+            tempReturn *= VOLTAGE_PIN_MAX;
+            tempReturn += VOLTAGE_PIN_CORRECTION;
+            tempReturn = Math.Round(tempReturn, 2);
+
+            return tempReturn;
+        }
+
+        public byte GetBoardID (Logger_class log = null)
+        {
+            byte tempReturn = 0x00;
+
+            if (!_CheckInit())
+            {
+                throw new NullReferenceException("ThunderBorg not initiated.");
+            }
+
+            if (log != null)
+            {
+                log.WriteLog("Checking board ID...");
+            }
+
+            using (var bus = I2CBus.Open("/dev/i2c-" + this._bus.ToString()))
+            {
+                bus.WriteBytes(_TBorgAddress, new byte[] { COMMAND_GET_ID });
+                byte[] response = bus.ReadBytes(_TBorgAddress, I2C_MAX_LEN);
+                if (response[0] == COMMAND_GET_ID)
+                {
+                    tempReturn = response[1];
                 }
             }
 
             return tempReturn;
+        }
+
+        public decimal[] GetBatteryMonitoringLimits(Logger_class log = null)
+        {
+            decimal tempMin = 0.00M;
+            decimal tempMax = 0.00M;
+
+            if (!_CheckInit())
+            {
+                throw new NullReferenceException("ThunderBorg not initiated.");
+            }
+
+            using (var bus = I2CBus.Open("/dev/i2c-" + this._bus.ToString()))
+            {
+                bus.WriteBytes(_TBorgAddress, new byte[] { COMMAND_GET_BATT_LIMITS });
+                byte[] response = bus.ReadBytes(_TBorgAddress, I2C_MAX_LEN);
+                if (response[0] == COMMAND_GET_BATT_LIMITS)
+                {
+                    tempMin = response[1];
+                    tempMax = response[2];
+
+                    tempMin /= Convert.ToDecimal(0xFF);
+                    tempMax /= Convert.ToDecimal(0xFF);
+
+                    tempMin *= VOLTAGE_PIN_MAX;
+                    tempMax *= VOLTAGE_PIN_MAX;
+
+                    tempMin = Math.Round(tempMin, 2);
+                    tempMax = Math.Round(tempMax, 2);
+
+                    decimal[] tempReturn = { tempMin, tempMax };
+
+                    if (log != null)
+                    {
+                        log.WriteLog("Voltages found - min: " + tempMin.ToString() + " max: " + tempMax.ToString());
+                    }
+
+                    return tempReturn;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Sets the battery monitoring limits used for setting the LED color.  The colors shown range from full red at minimum (or below), yellow at half, and green at maximum or higher.  These values are stored in the EEPROM and reloaded when the board is powered.
+        /// </summary>
+        /// <param name="minimum">Minimum voltage (0 V minimum)</param>
+        /// <param name="maximum">Maximum voltage (36.3 V maximum)</param>
+        /// <param name="log">Optional logging output routine</param>
+        public void SetBatteryMonitoringLimits(decimal minimum, decimal maximum, Logger_class log = null)
+        {
+            // my original values were 6.98 / 35.02; I don't know what the defaults are
+            if (!_CheckInit())
+            {
+                throw new NullReferenceException("ThunderBorg not initiated.");
+            }
+
+            minimum /= Convert.ToDecimal(VOLTAGE_PIN_MAX);
+            maximum /= Convert.ToDecimal(VOLTAGE_PIN_MAX);
+
+            byte levelMin = Math.Max(Convert.ToByte(0x00), Math.Min(Convert.ToByte(0xFF), Convert.ToByte(minimum * 0xFF)));
+            byte levelMax = Math.Max(Convert.ToByte(0x00), Math.Min(Convert.ToByte(0xFF), Convert.ToByte(maximum * 0xFF)));
+
+            if (log != null)
+            {
+                log.WriteLog("Trying to set battery monitoring limits to: 0x" + levelMin.ToString("X2") + " V. min and 0x" + levelMax.ToString("X2") + " V. max...");
+            }
+
+            using (var bus = I2CBus.Open("/dev/i2c-" + this._bus.ToString()))
+            {
+                bus.WriteBytes(_TBorgAddress, new byte[] { COMMAND_SET_BATT_LIMITS, levelMin, levelMax });
+                System.Threading.Thread.Sleep(200);     // note: this was recommended in the Python version for EEPROM writing
+            }
         }
 
         private bool _CheckInit(Logger_class log = null, bool throwException = false)
