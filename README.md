@@ -1,5 +1,3 @@
-RPi.I2C.Net
-===========
 
 This project was born from the idea of using C# for a PiBorg.  I started with a couple of other libraries, but faltered because of a bug in one of them that didn't read a ThunderBorg board properly.  This made me search for something else, where I found a seemingly abandoned project to create an I2C library.  Props to the original author from whom I forked the original library.  I also had some correspondence with the PiBorg group who is / has helping / helped me out on this.
 
@@ -8,6 +6,10 @@ Cheers!
 
 
 (Original Readme.md from original author)
+
+RPi.I2C.Net
+===========
+
 I2C library on C# for Raspberry Pi. About connecting Arduino and Raspberry Pi read this blog posts: [hardware part](http://blog.mshmelev.com/2013/06/connecting-raspberry-pi-and-arduino.html) and [software part](http://blog.mshmelev.com/2013/06/connecting-raspberry-pi-and-arduino-software.html).
 
 ## Description
