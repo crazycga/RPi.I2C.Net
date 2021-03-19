@@ -5,8 +5,9 @@ Cheers!
 
 This project requires the following NuGet package:
 
-```install-package mono.posix-4.5
-
+```
+install-package mono.posix-4.5
+```
 
 (Original Readme.md from original author)
 
